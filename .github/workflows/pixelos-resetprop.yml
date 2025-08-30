@@ -22,7 +22,7 @@ jobs:
       - name: Repack
         run: |
           xz -d -T0 *.xz
-          sudo ./resetprop.sh "$GSI_NAME"
+          sudo bash resetprop.sh "$GSI_NAME"
           xz -T0 "$GSI_NAME"
 
       - name: Generate release tag
