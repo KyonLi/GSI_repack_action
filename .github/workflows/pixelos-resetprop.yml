@@ -1,0 +1,37 @@
+name: PixelOS add resetprop_phh to /system/bin
+
+on:
+  repository_dispatch:
+  workflow_dispatch:
+
+env:
+  GSI_URL: https://github.com/mytja/treble_pixelos/releases/download/20250806/pixelos_arm64_bgN_ext4-16.0-unofficial-20250806.img.xz
+  GSI_NAME: pixelos_arm64_bgN_ext4-16.0-unofficial-20250806.img
+
+jobs:
+  repack:
+    name: Repack GSI
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Download GSI
+        run: wget "$GSI_URL"
+
+      - name: Repack
+        run: |
+          xz -d -T0 *.xz
+          sudo ./resetprop.sh "$GSI_NAME"
+          xz -T0 "$GSI_NAME"
+
+      - name: Generate release tag
+        id: tag
+        run: echo "release_tag=$(date +"%Y.%m.%d-%H%M")" >> $GITHUB_OUTPUT
+
+      - name: Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.tag.outputs.release_tag }}
+          token: ${{ secrets.GITHUB_TOKEN }}
+          files: ${{ env.GSI_NAME }}.xz
