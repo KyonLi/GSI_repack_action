@@ -1,0 +1,37 @@
+name: AOSP add resetprop_phh to /system/bin
+
+on:
+  repository_dispatch:
+  workflow_dispatch:
+
+env:
+  GSI_URL: https://github.com/ponces/treble_aosp/releases/download/v2025.06.25/aosp-arm64-ab-vanilla-16.0-20250625.img.xz
+  GSI_NAME: aosp-arm64-ab-vanilla-16.0-20250625.img
+
+jobs:
+  repack:
+    name: Repack GSI
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Download GSI
+        run: wget "$GSI_URL"
+
+      - name: Repack
+        run: |
+          xz -d -T0 *.xz
+          sudo bash resetprop.sh "$GSI_NAME"
+          xz -T0 "$GSI_NAME"
+
+      - name: Generate release tag
+        id: tag
+        run: echo "release_tag=$(date +"%Y.%m.%d-%H%M")" >> $GITHUB_OUTPUT
+
+      - name: Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.tag.outputs.release_tag }}
+          token: ${{ secrets.GITHUB_TOKEN }}
+          files: ${{ env.GSI_NAME }}.xz
